@@ -26,13 +26,11 @@ app.get("/", (req, res) => {
       ["id-5", "id-4", "id-2", "id-3", "id-1"],
       "id"
     )
-  );
+  )
   res.end("<h1>Hello World!</h1><hr>");
 });
 
 app.listen(port, hostname, () => {
   // eslint-disable-next-line no-console
-  console.log(
-    `Hello Xuan Tri Dev, I am running at http://${hostname}:${port}/`
-  );
+  console.log(`Hello Xuan Tri Dev, I am running at http://${hostname}:${port}/`)
 });

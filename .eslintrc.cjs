@@ -8,8 +8,7 @@ module.exports = {
   env: { es2020: true, node: true },
   extends: [
     "eslint:recommended",
-    "plugin:react/recommended",
-    "plugin:prettier/recommended",
+    "plugin:prettier/recommended", // tích hợp Prettier
   ],
   parser: "@babel/eslint-parser",
   parserOptions: {
@@ -20,7 +19,7 @@ module.exports = {
   },
   plugins: ["prettier"],
   rules: {
-    // Common
+    // Common rules
     "no-console": 1,
     "no-extra-boolean-cast": 0,
     "no-lonely-if": 1,
@@ -32,7 +31,7 @@ module.exports = {
     "object-curly-spacing": [1, "always"],
     indent: ["warn", 2],
     semi: [1, "never"],
-    quotes: ["error", "single"],
+    quotes: ["error", "always"],
     "array-bracket-spacing": 1,
     "linebreak-style": 0,
     "no-unexpected-multiline": "warn",
