@@ -6,26 +6,23 @@
 
 import express from "express";
 import exitHook from "async-exit-hook";
-import { CONNECT_DB, GET_DB, CLOSE_DB } from "./config/mongodb.js";
+import { CONNECT_DB, CLOSE_DB } from "./config/mongodb.js";
+import { env } from "~/config/environment.js";
 
 const START_SERVER = () => {
   const app = express();
 
-  const hostname = "localhost";
-  const port = 8017;
-
   app.get("/", async (req, res) => {
-    console.log(await GET_DB().listCollections().toArray());
     res.end("<h1>Hello World!</h1><hr>");
   });
 
-  app.listen(port, hostname, () => {
-    console.log(`3. Hello Xuan Tri Dev!, I am running at http://${hostname}:${port}/`);
+  app.listen(env.APP_PORT, env.APP_HOST, () => {
+    console.log(`3. Hi ${env.AUTHOR}, I am running at http://${env.APP_HOST}:${env.APP_PORT}/`);
   });
 
   // thực hiện các tác vụ cleanup trước khi dừng server
   exitHook(() => {
-    console.log('4. Disconnecting from MongoDB Cloud Atlas"');
+    console.log("4. Server is shutting down");
     CLOSE_DB();
     console.log('5. Disconnected from MongoDB Cloud Atlas"');
   });
