@@ -5,7 +5,8 @@
  */
 
 import express from "express";
-import { CONNECT_DB, GET_DB } from "./config/mongodb.js";
+import exitHook from "async-exit-hook";
+import { CONNECT_DB, GET_DB, CLOSE_DB } from "./config/mongodb.js";
 
 const START_SERVER = () => {
   const app = express();
@@ -15,12 +16,18 @@ const START_SERVER = () => {
 
   app.get("/", async (req, res) => {
     console.log(await GET_DB().listCollections().toArray());
-
     res.end("<h1>Hello World!</h1><hr>");
   });
 
   app.listen(port, hostname, () => {
     console.log(`3. Hello Xuan Tri Dev!, I am running at http://${hostname}:${port}/`);
+  });
+
+  // thực hiện các tác vụ cleanup trước khi dừng server
+  exitHook(() => {
+    console.log('4. Disconnecting from MongoDB Cloud Atlas"');
+    CLOSE_DB();
+    console.log('5. Disconnected from MongoDB Cloud Atlas"');
   });
 };
 
