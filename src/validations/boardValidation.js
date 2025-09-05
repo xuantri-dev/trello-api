@@ -22,11 +22,9 @@ const createNew = async (req, res, next) => {
       "string.max": "length must be less than or equal to 5 characters long(xuantridev)",
       "string.trim": "title must not have leading or trailing whitespace (xuantridev)",
     }),
-
-    description: Joi.string().required().min(3).max(256).trim().strict(),
+    description: Joi.string().required().min(3).max(255).trim().strict(),
   });
   try {
-    console.log("req.body: ", req.body);
     // chỉ định abortEarly: false để trường hợp có nhiều lỗi validation thì trả về tất cả lỗi (vid 52)
     await correctCondition.validateAsync(req.body, { abortEarly: false });
     // validate dữ liệu xong xuôi hợp lệ thì cho request đi tiếp sang controller
