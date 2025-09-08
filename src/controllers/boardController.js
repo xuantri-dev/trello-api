@@ -5,20 +5,17 @@
  */
 
 import { StatusCodes } from "http-status-codes";
+import { boardService } from "~/services/boardService";
 
-const createNew = (req, res, next) => {
+const createNew = async (req, res, next) => {
   try {
-    console.log("req.body: ", req.body);
-
     // Điều hướng dữ liệu sang tầng Service
+    const createBoard = await boardService.createNew(req.body);
 
     // có kết quả thì trả về phía Client
-    res.status(StatusCodes.CREATED).json({ message: "POST from Controller: API create new board" });
+    res.status(StatusCodes.CREATED).json(createBoard);
   } catch (error) {
     next(error);
-    // res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-    //   errors: error.message,
-    // });
   }
 };
 
