@@ -17,11 +17,9 @@ const createNew = async (reqBody) => {
 
     // gọi tới tầng model để xử lí lưu bản ghi newBoard vào trong database
     const createdBoard = await boardModel.createNew(newBoard);
-    console.log(createdBoard);
 
     // lấy bản ghi board sau khi gọi (tùy mục đích dự án mà có cần bước này hay không)
     const getNewBoard = await boardModel.findOneById(createdBoard.insertedId);
-    console.log(getNewBoard);
 
     // Trả kết quả về, trong Service luôn phải có return
     return getNewBoard;
