@@ -7,6 +7,7 @@
 import Joi from "joi";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "~/utils/ApiError";
+import { BOARD_TYPE } from "~/utils/constants";
 
 const createNew = async (req, res, next) => {
   /**
@@ -24,6 +25,7 @@ const createNew = async (req, res, next) => {
       "string.trim": "title must not have leading or trailing whitespace (xuantridev)",
     }),
     description: Joi.string().required().min(3).max(255).trim().strict(),
+    type: Joi.string().valid(BOARD_TYPE.PUBLIC, BOARD_TYPE.PRIVATE).required(),
   });
   try {
     // chỉ định abortEarly: false để trường hợp có nhiều lỗi validation thì trả về tất cả lỗi (vid 52)
