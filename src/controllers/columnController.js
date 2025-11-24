@@ -5,6 +5,7 @@
  */
 
 import { StatusCodes } from "http-status-codes";
+import { result } from "lodash";
 import { columnService } from "~/services/columnService";
 
 const createNew = async (req, res, next) => {
@@ -27,4 +28,15 @@ const update = async (req, res, next) => {
   }
 };
 
-export const columnController = { createNew, update };
+const deleteItem = async (req, res, next) => {
+  try {
+    const columnId = req.params.id;
+    const result = await columnService.deleteItem(columnId);
+
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const columnController = { createNew, update, deleteItem };
