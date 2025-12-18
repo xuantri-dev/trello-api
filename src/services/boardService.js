@@ -4,103 +4,103 @@
  * "A bit of fragrance clings to the hand that gives flowers!"
  */
 
-import { slugify } from "~/utils/formatters";
-import { boardModel } from "~/models/boardModel";
-import { columnModel } from "~/models/columnModel";
-import { cardModel } from "~/models/cardModel";
+import { slugify } from '~/utils/formatters'
+import { boardModel } from '~/models/boardModel'
+import { columnModel } from '~/models/columnModel'
+import { cardModel } from '~/models/cardModel'
 
-import ApiError from "~/utils/ApiError";
-import { StatusCodes } from "http-status-codes";
-import { cloneDeep, create } from "lodash";
+import ApiError from '~/utils/ApiError'
+import { StatusCodes } from 'http-status-codes'
+import { cloneDeep } from 'lodash'
 
 const createNew = async (reqBody) => {
   try {
     // xử lí logic dữ liệu tùy đặc thù dự án
     const newBoard = {
       ...reqBody,
-      slug: slugify(reqBody.title),
-    };
+      slug: slugify(reqBody.title)
+    }
 
     // gọi tới tầng model để xử lí lưu bản ghi newBoard vào trong database
-    const createdBoard = await boardModel.createNew(newBoard);
+    const createdBoard = await boardModel.createNew(newBoard)
 
     // lấy bản ghi board sau khi gọi (tùy mục đích dự án mà có cần bước này hay không)
-    const getNewBoard = await boardModel.findOneById(createdBoard.insertedId);
+    const getNewBoard = await boardModel.findOneById(createdBoard.insertedId)
 
     // Trả kết quả về, trong Service luôn phải có return
-    return getNewBoard;
+    return getNewBoard
   } catch (error) {
-    throw error;
+    throw error
   }
-};
+}
 
 const getDetails = async (boardId) => {
   try {
-    const board = await boardModel.getDetails(boardId);
+    const board = await boardModel.getDetails(boardId)
     if (!board) {
-      throw new ApiError(StatusCodes.NOT_FOUND, "Board not found!");
+      throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found!')
     }
 
     // deep clone board ra một cái mới để xử lí, không ảnh hưởng tới board ban đầu, tùy mục đích về sau mà có cần clone deep hay không (vid 63)
-    const resBoard = cloneDeep(board);
+    const resBoard = cloneDeep(board)
     // đưa card về đúng column của nó
     resBoard.columns.forEach((column) => {
       // cách dùng .equals này là bởi vì ObjectId trong MongoDB có support method equals
-      column.cards = resBoard.cards.filter((card) => card.columnId.equals(column._id));
+      column.cards = resBoard.cards.filter((card) => card.columnId.equals(column._id))
 
       // cách khác đơn giản là convert ObjectId về string bằng hàm toString() của JavaScript
       // column.cards = resBoard.cards.filter(
       //   (card) => card.columnId.toString() === column._id.toString()
       // );
-    });
+    })
 
     // xóa mảng cards khỏi board ban đầu
-    delete resBoard.cards;
+    delete resBoard.cards
 
-    return resBoard;
+    return resBoard
   } catch (error) {
-    throw error;
+    throw error
   }
-};
+}
 
 const update = async (boardId, reqBody) => {
   try {
     const updateData = {
       ...reqBody,
-      updatedAt: Date.now(),
-    };
-    const updatedBoard = await boardModel.update(boardId, updateData);
+      updatedAt: Date.now()
+    }
+    const updatedBoard = await boardModel.update(boardId, updateData)
 
-    return updatedBoard;
+    return updatedBoard
   } catch (error) {
-    throw error;
+    throw error
   }
-};
+}
 
 const moveCardToDifferentColumn = async (reqBody) => {
   try {
     // B1: Cập nhật mảng cardOrderIds của Column ban đầu chứa nó (Hiểu bản chất là xóa cái _id của Card ra khỏi mảng)
     await columnModel.update(reqBody.prevColumnId, {
       cardOrderIds: reqBody.prevCardOrderIds,
-      updatedAt: Date.now(),
-    });
+      updatedAt: Date.now()
+    })
     // B2: Cập nhật mảng cardOrderIds của Column tiếp theo (Hiểu bản chất là thêm cái _id của Card vào mảng)
     await columnModel.update(reqBody.nextColumnId, {
       cardOrderIds: reqBody.nextCardOrderIds,
-      updatedAt: Date.now(),
-    });
+      updatedAt: Date.now()
+    })
     // B3: Câp nhật lại trường columnId mới của cái Card đã kéo
-    await cardModel.update(reqBody.currentCardId, { columnId: reqBody.nextColumnId });
+    await cardModel.update(reqBody.currentCardId, { columnId: reqBody.nextColumnId })
 
-    return { updateResult: "Successfully!" };
+    return { updateResult: 'Successfully!' }
   } catch (error) {
-    throw error;
+    throw error
   }
-};
+}
 
 export const boardService = {
   createNew,
   getDetails,
   update,
-  moveCardToDifferentColumn,
-};
+  moveCardToDifferentColumn
+}
