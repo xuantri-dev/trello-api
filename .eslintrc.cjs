@@ -6,9 +6,9 @@
  */
 module.exports = {
   env: { browser: true, es2020: true, node: true },
-  extends: [ 'eslint:recommended' ],
+  extends: ['eslint:recommended'],
   parser: '@babel/eslint-parser',
-  parserOptions: { ecmaVersion: 'latest', sourceType: 'module', allowImportExportEverywhere: true },
+  parserOptions: { ecmaVersion: 'latest', sourceType: 'module', allowImportExportEverywhere: true, requireConfigFile: false },
   settings: { react: { version: '18.2' } },
   plugins: [],
   rules: {
@@ -32,6 +32,6 @@ module.exports = {
     'keyword-spacing': 1,
     'comma-dangle': 1,
     'comma-spacing': 1,
-    'arrow-spacing': 1,
-  },
-};
+    'arrow-spacing': 1
+  }
+}
