@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { pickUser } from '~/utils/formatters'
 import { WEBSITE_DOMAIN } from '~/utils/constants'
 import { BrevoProvider } from '~/providers/BrevoProvider'
+import { env } from '~/config/environment'
+import { JwtProvider } from '~/providers/JwtProvider'
 
 const createNew = async (reqBody) => {
   try {
@@ -49,6 +51,69 @@ const createNew = async (reqBody) => {
   }
 }
 
+const verifyAccount = async (reqBody) => {
+  try {
+    // Query user trong Database
+    const exitUser = await userModel.findOneByEmail(reqBody.email)
+
+    // Các bước kiểm tra cần thiết
+    if (!exitUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found!')
+    if (exitUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is already active!')
+    if (reqBody.token !== exitUser.verifyToken) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Token is invalid!')
+
+    // Nếu như mọi thứ ok thì bắt đầu update lại thông tin của user để verify account
+    const updateData = {
+      isActive: true,
+      verifyToken: null
+    }
+
+    // Thực hiện update thông tin user
+    const updatedUser = await userModel.update(exitUser._id, updateData)
+
+    return pickUser(updatedUser)
+  } catch (error) {
+    throw error
+  }
+}
+
+const login = async (reqBody) => {
+  try {
+    // Query user trong Database
+    const exitUser = await userModel.findOneByEmail(reqBody.email)
+
+    // Các bước kiểm tra cần thiết
+    if (!exitUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found!')
+    if (!exitUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not active!')
+    if (!bcryptjs.compareSync(reqBody.password, exitUser.password)) {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your Email or Password is incorrect!')
+    }
+
+    /** Nếu mọi thứ ok thì bắt đầu tạo Tokens đăng nhập để trả về cho phía FE */
+    // Tạo thông tin sẽ đính kém trong JWT Token bao gồm _id và email của user
+    const userInfo = { _id: exitUser._id, email: exitUser.email }
+
+    // Tạo ra 2 loại token, accessToken và refresshToken để trả về cho phía FE
+    const accessToken = await JwtProvider.generateToken(
+      userInfo,
+      env.ACCESS_TOKEN_SECRET_SIGNATURE,
+      env.ACCESS_TOKEN_LIFE
+    )
+
+    const refreshToken = await JwtProvider.generateToken(
+      userInfo,
+      env.REFRESH_TOKEN_SECRET_SIGNATURE,
+      env.REFRESH_TOKEN_LIFE
+    )
+
+    // Trả về thông tin của user kèm theo 2 cái token vừa tạo ra
+    return { accessToken, refreshToken, ...pickUser(exitUser) }
+  } catch (error) {
+    throw error
+  }
+}
+
 export const userService = {
-  createNew
+  createNew,
+  verifyAccount,
+  login
 }
