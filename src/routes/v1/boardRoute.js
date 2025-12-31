@@ -1,29 +1,29 @@
 /**
  * Updated by trungquandev.com's author on August 17 2023
  * YouTube: https://youtube.com/@trungquandev
- * "A bit of fragrance clings to the hand that gives flowers!"
+ * 'A bit of fragrance clings to the hand that gives flowers!'
  */
-import express from "express";
-import { StatusCodes } from "http-status-codes";
-import { boardValidation } from "~/validations/boardValidation";
-import { boardController } from "~/controllers/boardController";
+import express from 'express'
+import { StatusCodes } from 'http-status-codes'
+import { boardValidation } from '~/validations/boardValidation'
+import { boardController } from '~/controllers/boardController'
+import { authMiddleware } from '~/middlewares/authMiddleware'
 
-const Router = express.Router();
+const Router = express.Router()
 
-Router.route("/")
-  .get((req, res) => {
-    res.status(StatusCodes.OK).json({ message: "Note: API get list boards" });
+Router.route('/')
+  .get(authMiddleware.isAuthorized, (req, res) => {
+    res.status(StatusCodes.OK).json({ message: 'Note: API get list boards' })
   })
-  .post(boardValidation.createNew, boardController.createNew);
+  .post(authMiddleware.isAuthorized, boardValidation.createNew, boardController.createNew)
 
-Router.route("/:id")
-  .get(boardController.getDetails)
-  .put(boardValidation.update, boardController.update);
+Router.route('/:id')
+  .get(authMiddleware.isAuthorized, boardController.getDetails)
+  .put(authMiddleware.isAuthorized, boardValidation.update, boardController.update)
 
 // API hỗ trợ di chuyển card giữa các column khác nhau trong một board
-Router.route("/support/moving_card").put(
-  boardValidation.moveCardToDifferentColumn,
-  boardController.moveCardToDifferentColumn
-);
+Router.route('/support/moving_card').put(
+  authMiddleware.isAuthorized, boardValidation.moveCardToDifferentColumn, boardController.moveCardToDifferentColumn
+)
 
-export const boardRoute = Router;
+export const boardRoute = Router
