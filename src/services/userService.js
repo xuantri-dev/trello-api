@@ -103,8 +103,8 @@ const login = async (reqBody) => {
     const refreshToken = await JwtProvider.generateToken(
       userInfo,
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
-      15 // 15 giây
-      // env.REFRESH_TOKEN_LIFE
+      // 15 // 15 giây
+      env.REFRESH_TOKEN_LIFE
     )
 
     // Trả về thông tin của user kèm theo 2 cái token vừa tạo ra
@@ -115,13 +115,17 @@ const login = async (reqBody) => {
 }
 
 const refreshToken = async (clientRefreshToken) => {
-  try {
-    // Verify / giải mã cái refesh token xem có hợp lệ không
-    const refreshTokenDecoded = await JwtProvider.verifyToken(clientRefreshToken, env.REFRESH_TOKEN_SECRET_SIGNATURE)
+  try { // Verify / giải mã cái refesh token xem có hợp lệ không
+    const refreshTokenDecoded = await JwtProvider.verifyToken(
+      clientRefreshToken,
+      env.REFRESH_TOKEN_SECRET_SIGNATURE
+    )
 
-    // Đoạn này chúng ta chỉ lưu những thông tin unique và cố định của user trong token rồi, vì vậy có thể lấy luôn từ decoded ra, tiết kiệm query vào DB để lấy data mới
+    // Đoạn này chúng ta chỉ lưu những thông tin unique và cố định của user trong
+    // token rồi, vì vậy có thể lấy luôn từ decoded ra, tiết kiệm query vào DB để
+    // lấy data mới
     const userInfo = {
-      _id: refreshTokenDecoded._id,
+      id: refreshTokenDecoded._id,
       email: refreshTokenDecoded.email
     }
 
@@ -129,11 +133,42 @@ const refreshToken = async (clientRefreshToken) => {
     const accessToken = await JwtProvider.generateToken(
       userInfo,
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      5 // 5 giây để test accessToken hết hạn
-      // env.ACCESS_TOKEN_LIFE
+      // 5 // 5 giây để test accessToken hết hạn
+      env.ACCESS_TOKEN_LIFE
     )
 
     return { accessToken }
+  } catch (error) {
+    throw error
+  }
+}
+
+const update = async (userId, reqBody) => {
+  try {
+    // Query user và kiểm tra cho chắc chắn
+    const exitUser = await userModel.findOneById(userId)
+    if (!exitUser) throw new ApiError(StatusCodes.NOT_FOUND, 'Account not found!')
+    if (!exitUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account is not active!')
+
+    // Khởi tạo kết quả updated User ban đầu là emty
+    let updatedUser = {}
+
+    // Trường hợp change password
+    if (reqBody.current_password && reqBody.new_password) {
+      // Kiểm tra xem cái current_password có đúng hay không
+      if (!bcryptjs.compareSync(reqBody.current_password, exitUser.password)) {
+        throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your Current Password is incorrect!')
+      }
+      // Nếu như current_password là đúng thì chúng ta sẽ hash một cái mật khẩu mới và update lại vào DB
+      updatedUser = await userModel.update(exitUser._id, {
+        password: bcryptjs.hashSync(reqBody.new_password, 8)
+      })
+    } else {
+      // Trường hợp update các thông tin chung, ví dụ như displayName
+      updatedUser = await userModel.update(exitUser._id, reqBody)
+    }
+
+    return pickUser(updatedUser)
   } catch (error) {
     throw error
   }
@@ -143,5 +178,6 @@ export const userService = {
   createNew,
   verifyAccount,
   login,
-  refreshToken
+  refreshToken,
+  update
 }
