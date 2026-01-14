@@ -11,3 +11,6 @@ export const WHITELIST_DOMAINS = ['http://localhost:5173']
 export const BOARD_TYPE = { PUBLIC: 'puclic', PRIVATE: 'private' }
 
 export const WEBSITE_DOMAIN = (env.BUILD_MODE === 'production') ? env.WEBSITE_DOMAIN_PRODUCTION : env.WEBSITE_DOMAIN_DEVELOPMENT
+
+export const DEFAULT_PAGE = 1
+export const DEFAULT_ITEM_PER_PAGE = 12
