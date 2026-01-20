@@ -29,7 +29,7 @@ const update = async (req, res, next) => {
   // Lưu ý không dùng hàm required() trong trường hợp update
   const correctCondition = Joi.object({
     title: Joi.string().min(3).max(50).trim().strict(),
-    description: Joi.string
+    description: Joi.string().optional()
   })
 
   try {
