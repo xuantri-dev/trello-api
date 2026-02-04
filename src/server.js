@@ -13,6 +13,11 @@ import { env } from '~/config/environment'
 import { APIs_V1 } from '~/routes/v1'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware'
 import cookieParser from 'cookie-parser'
+// Xử lí socket real-time với gói socket.io
+// https://socket.io/docs/v4/tutorial/step-3
+import socketIo from 'socket.io'
+import http from 'http'
+import { inviteUserToBoardSocket } from '~/sockets/inviteUserToBoardSocket'
 
 const START_SERVER = () => {
   const app = express()
@@ -39,11 +44,33 @@ const START_SERVER = () => {
   // Middleware xửa lí lỗi tập trung
   app.use(errorHandlingMiddleware)
 
-  app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
-    console.log(`3. Hi ${env.AUTHOR}, I am running at http://${env.LOCAL_DEV_APP_HOST}:${env.LOCAL_DEV_APP_PORT}/`)
+  // Tạo một cái server mới bọc thằng app của express để làm real-time với socket.io
+  const server = http.createServer(app)
+  // Khởi tạo biến io với server và cors
+  const io = socketIo(server, { cors: corsOptions })
+  io.on('connection', (socket) => {
+    // Gọi các socket tùy theo tính năng ở đây
+    inviteUserToBoardSocket(socket)
+
+    // ...vv
   })
 
+  // Môi trường Production (cụ thể hiện tại là đang support Render.com)
+  if (env.BUILD_MODE === 'production') {
+    // Dùng server.listen thay vì dùng app.listen vì lúc này server đã bao gồm express app và đã config socket.io
+    server.listen(process.env.PORT, () => {
+      console.log(`3. Production: Hi ${env.AUTHOR}, Back-end Server is running successfully at Port: ${process.env.PORT}`)
+    })
+  } else {
+    // Môi trườngh Local Dev
+    // Dùng server.listen thay vì dùng app.listen vì lúc này server đã bao gồm express app và đã config socket.io
+    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+      console.log(`3. Local Dev: Hi ${env.AUTHOR}, Back-end Server is running successfully at Host: ${env.LOCAL_DEV_APP_HOST} and Port ${env.LOCAL_DEV_APP_PORT}`)
+    })
+
+  }
   // thực hiện các tác vụ cleanup trước khi dừng server
+  // https://stackoverflow.com/q/14031763/8324172
   exitHook(() => {
     // console.log('4. Server is shutting down')
     CLOSE_DB()
@@ -53,6 +80,7 @@ const START_SERVER = () => {
 
 // Chỉ khi kết nối tới database thành công thì mới start server back-end lên
 // Immediately-invoked / Anonymous Async Function (IIFE)
+//IIFE Hàm bất đồng bộ tự gọi ngay lập tức (tức là tự gọi ngay khi chương trình chạy)
 (async () => {
   try {
     console.log('1. Connecting to MongoDB Cloud Atlas...')
